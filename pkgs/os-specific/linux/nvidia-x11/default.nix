@@ -1,19 +1,23 @@
 { lib, callPackage, fetchFromGitHub, fetchurl, fetchpatch, stdenv, pkgsi686Linux }:
 
 let
-  generic = args: let
-    imported = import ./generic.nix args;
-  in callPackage imported {
-    lib32 = (pkgsi686Linux.callPackage imported {
-      libsOnly = true;
-      kernel = null;
-    }).out;
-  };
+  generic = args:
+    let
+      imported = import ./generic.nix args;
+    in
+    callPackage imported {
+      lib32 = (pkgsi686Linux.callPackage imported {
+        libsOnly = true;
+        kernel = null;
+      }).out;
+    };
 
   kernel = callPackage # a hacky way of extracting parameters from callPackage
-    ({ kernel, libsOnly ? false }: if libsOnly then { } else kernel) { };
+    ({ kernel, libsOnly ? false }: if libsOnly then { } else kernel)
+    { };
 
-  selectHighestVersion = a: b: if lib.versionOlder a.version b.version
+  selectHighestVersion = a: b:
+    if lib.versionOlder a.version b.version
     then b
     else a;
 
@@ -39,6 +43,17 @@ rec {
     openSha256 = "sha256-VLmh7eH0xhEu/AK+Osb9vtqAFni+lx84P/bo4ZgCqj8=";
     settingsSha256 = "sha256-sX9dHEp9zH9t3RWp727lLCeJLo8QRAGhVb8iN6eX49g=";
     persistencedSha256 = "sha256-qe8e1Nxla7F0U88AbnOZm6cHxo57pnLCqtjdvOvq9jk=";
+  };
+
+  confcom = generic {
+    version = "535.104.05";
+    sha256_64bit = "sha256-L51gnR2ncL7udXY2Y1xG5+2CU63oh7h8elSC4z/L7ck=";
+    sha256_aarch64 = "sha256-J4uEQQ5WK50rVTI2JysBBHLpmBEWQcQ0CihgEM6xuvk=";
+    openSha256 = "sha256-0ng4hyiUt0rHZkNveFTo+dSaqkMFO4UPXh85/js9Zbw=";
+    settingsSha256 = "sha256-pS9W5LMenX0Rrwmpg1cszmpAYPt0Mx+apVQmOmLWTog=";
+    persistencedSha256 = "sha256-d0Q3Lk80JqkS1B54Mahu2yY/WocOqFFbZVBh+ToGhaE=";
+
+    patches = [ rcu_patch ];
   };
 
   latest = selectHighestVersion production (generic {
@@ -146,48 +161,50 @@ rec {
     '';
   };
 
-  legacy_340 = let
-    # Source corresponding to https://aur.archlinux.org/packages/nvidia-340xx-dkms
-    aurPatches = fetchFromGitHub {
-      owner = "archlinux-jerry";
-      repo = "nvidia-340xx";
-      rev = "7616dfed253aa93ca7d2e05caf6f7f332c439c90";
-      hash = "sha256-1qlYc17aEbLD4W8XXn1qKryBk2ltT6cVIv5zAs0jXZo=";
+  legacy_340 =
+    let
+      # Source corresponding to https://aur.archlinux.org/packages/nvidia-340xx-dkms
+      aurPatches = fetchFromGitHub {
+        owner = "archlinux-jerry";
+        repo = "nvidia-340xx";
+        rev = "7616dfed253aa93ca7d2e05caf6f7f332c439c90";
+        hash = "sha256-1qlYc17aEbLD4W8XXn1qKryBk2ltT6cVIv5zAs0jXZo=";
+      };
+      patchset = [
+        "0001-kernel-5.7.patch"
+        "0002-kernel-5.8.patch"
+        "0003-kernel-5.9.patch"
+        "0004-kernel-5.10.patch"
+        "0005-kernel-5.11.patch"
+        "0006-kernel-5.14.patch"
+        "0007-kernel-5.15.patch"
+        "0008-kernel-5.16.patch"
+        "0009-kernel-5.17.patch"
+        "0010-kernel-5.18.patch"
+        "0011-kernel-6.0.patch"
+        "0012-kernel-6.2.patch"
+        "0013-kernel-6.3.patch"
+        "0014-kernel-6.5.patch"
+        "0015-kernel-6.6.patch"
+      ];
+    in
+    generic {
+      version = "340.108";
+      sha256_32bit = "1jkwa1phf0x4sgw8pvr9d6krmmr3wkgwyygrxhdazwyr2bbalci0";
+      sha256_64bit = "06xp6c0sa7v1b82gf0pq0i5p0vdhmm3v964v0ypw36y0nzqx8wf6";
+      settingsSha256 = "0zm29jcf0mp1nykcravnzb5isypm8l8mg2gpsvwxipb7nk1ivy34";
+      persistencedSha256 = "1ax4xn3nmxg1y6immq933cqzw6cj04x93saiasdc0kjlv0pvvnkn";
+      useGLVND = false;
+
+      broken = kernel.kernelAtLeast "6.7";
+      patches = map (patch: "${aurPatches}/${patch}") patchset;
+
+      # fixes the bug described in https://bbs.archlinux.org/viewtopic.php?pid=2083439#p2083439
+      # see https://bbs.archlinux.org/viewtopic.php?pid=2083651#p2083651
+      # and https://bbs.archlinux.org/viewtopic.php?pid=2083699#p2083699
+      postInstall = ''
+        mv $out/lib/tls/* $out/lib
+        rmdir $out/lib/tls
+      '';
     };
-    patchset = [
-      "0001-kernel-5.7.patch"
-      "0002-kernel-5.8.patch"
-      "0003-kernel-5.9.patch"
-      "0004-kernel-5.10.patch"
-      "0005-kernel-5.11.patch"
-      "0006-kernel-5.14.patch"
-      "0007-kernel-5.15.patch"
-      "0008-kernel-5.16.patch"
-      "0009-kernel-5.17.patch"
-      "0010-kernel-5.18.patch"
-      "0011-kernel-6.0.patch"
-      "0012-kernel-6.2.patch"
-      "0013-kernel-6.3.patch"
-      "0014-kernel-6.5.patch"
-      "0015-kernel-6.6.patch"
-    ];
-  in generic {
-    version = "340.108";
-    sha256_32bit = "1jkwa1phf0x4sgw8pvr9d6krmmr3wkgwyygrxhdazwyr2bbalci0";
-    sha256_64bit = "06xp6c0sa7v1b82gf0pq0i5p0vdhmm3v964v0ypw36y0nzqx8wf6";
-    settingsSha256 = "0zm29jcf0mp1nykcravnzb5isypm8l8mg2gpsvwxipb7nk1ivy34";
-    persistencedSha256 = "1ax4xn3nmxg1y6immq933cqzw6cj04x93saiasdc0kjlv0pvvnkn";
-    useGLVND = false;
-
-    broken = kernel.kernelAtLeast "6.7";
-    patches = map (patch: "${aurPatches}/${patch}") patchset;
-
-    # fixes the bug described in https://bbs.archlinux.org/viewtopic.php?pid=2083439#p2083439
-    # see https://bbs.archlinux.org/viewtopic.php?pid=2083651#p2083651
-    # and https://bbs.archlinux.org/viewtopic.php?pid=2083699#p2083699
-    postInstall = ''
-      mv $out/lib/tls/* $out/lib
-      rmdir $out/lib/tls
-    '';
-  };
 }
