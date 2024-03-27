@@ -80,7 +80,7 @@ let
 
   enabledUpstreamUnits = filter (n: ! elem n cfg.suppressedUnits) upstreamUnits;
   enabledUnits = filterAttrs (n: v: ! elem n cfg.suppressedUnits) cfg.units;
-  jobScripts = concatLists (mapAttrsToList (_: unit: unit.jobScripts or []) (filterAttrs (_: v: v.enable) cfg.services));
+  jobScripts = concatLists (mapAttrsToList (_: unit: unit.jobScripts or [ ]) (filterAttrs (_: v: v.enable) cfg.services));
 
   stage1Units = generateUnits {
     type = "initrd";
@@ -102,7 +102,7 @@ let
   initrdBinEnv = pkgs.buildEnv {
     name = "initrd-bin-env";
     paths = map getBin cfg.initrdBin;
-    pathsToLink = ["/bin" "/sbin"];
+    pathsToLink = [ "/bin" "/sbin" ];
     postBuild = concatStringsSep "\n" (mapAttrsToList (n: v: "ln -sf '${v}' $out/bin/'${n}'") cfg.extraBin);
   };
 
@@ -115,7 +115,8 @@ let
       ++ mapAttrsToList (_: v: { object = v.source; symlink = v.target; }) (filterAttrs (_: v: v.enable) cfg.contents);
   };
 
-in {
+in
+{
   options.boot.initrd.systemd = {
     enable = mkEnableOption "systemd in initrd" // {
       description = ''
@@ -148,7 +149,7 @@ in {
 
     managerEnvironment = mkOption {
       type = with types; attrsOf (nullOr (oneOf [ str path package ]));
-      default = {};
+      default = { };
       example = { SYSTEMD_LOG_LEVEL = "debug"; };
       description = ''
         Environment variables of PID 1. These variables are
@@ -163,7 +164,7 @@ in {
           "/etc/hostname".text = "mymachine";
         }
       '';
-      default = {};
+      default = { };
       type = utils.systemdUtils.types.initrdContents;
     };
 
@@ -172,7 +173,7 @@ in {
         Store paths to copy into the initrd as well.
       '';
       type = with types; listOf (oneOf [ singleLineStr package ]);
-      default = [];
+      default = [ ];
     };
 
     strip = mkOption {
@@ -198,7 +199,7 @@ in {
         }
       '';
       type = types.attrsOf types.path;
-      default = {};
+      default = { };
     };
 
     suppressedStorePaths = mkOption {
@@ -207,7 +208,7 @@ in {
         should not be copied.
       '';
       type = types.listOf types.singleLineStr;
-      default = [];
+      default = [ ];
     };
 
     root = lib.mkOption {
@@ -273,49 +274,49 @@ in {
     };
 
     packages = mkOption {
-      default = [];
+      default = [ ];
       type = types.listOf types.package;
       example = literalExpression "[ pkgs.systemd-cryptsetup-generator ]";
       description = "Packages providing systemd units and hooks.";
     };
 
     targets = mkOption {
-      default = {};
+      default = { };
       visible = "shallow";
       type = systemdUtils.types.initrdTargets;
       description = "Definition of systemd target units.";
     };
 
     services = mkOption {
-      default = {};
+      default = { };
       type = systemdUtils.types.initrdServices;
       visible = "shallow";
       description = "Definition of systemd service units.";
     };
 
     sockets = mkOption {
-      default = {};
+      default = { };
       type = systemdUtils.types.initrdSockets;
       visible = "shallow";
       description = "Definition of systemd socket units.";
     };
 
     timers = mkOption {
-      default = {};
+      default = { };
       type = systemdUtils.types.initrdTimers;
       visible = "shallow";
       description = "Definition of systemd timer units.";
     };
 
     paths = mkOption {
-      default = {};
+      default = { };
       type = systemdUtils.types.initrdPaths;
       visible = "shallow";
       description = "Definition of systemd path units.";
     };
 
     mounts = mkOption {
-      default = [];
+      default = [ ];
       type = systemdUtils.types.initrdMounts;
       visible = "shallow";
       description = ''
@@ -326,7 +327,7 @@ in {
     };
 
     automounts = mkOption {
-      default = [];
+      default = [ ];
       type = systemdUtils.types.automounts;
       visible = "shallow";
       description = ''
@@ -337,7 +338,7 @@ in {
     };
 
     slices = mkOption {
-      default = {};
+      default = { };
       type = systemdUtils.types.slices;
       visible = "shallow";
       description = "Definition of slice configurations.";
@@ -350,6 +351,14 @@ in {
         Whether to enable TPM2 support in the initrd.
       '';
     };
+
+    forceRoRootMount = mkOption {
+      default = false;
+      type = types.bool;
+      description = lib.mdDoc ''
+        Force / to be mounted as read-only.
+      '';
+    };
   };
 
   config = mkIf (config.boot.initrd.enable && cfg.enable) {
@@ -358,16 +367,17 @@ in {
         assertion = cfg.root == "fstab" -> any (fs: fs.mountPoint == "/") (builtins.attrValues config.fileSystems);
         message = "The ‘fileSystems’ option does not specify your root file system.";
       }
-    ] ++ map (name: {
-      assertion = lib.attrByPath name (throw "impossible") config.boot.initrd == "";
-      message = ''
-        systemd stage 1 does not support 'boot.initrd.${lib.concatStringsSep "." name}'. Please
-          convert it to analogous systemd units in 'boot.initrd.systemd'.
+    ] ++ map
+      (name: {
+        assertion = lib.attrByPath name (throw "impossible") config.boot.initrd == "";
+        message = ''
+          systemd stage 1 does not support 'boot.initrd.${lib.concatStringsSep "." name}'. Please
+            convert it to analogous systemd units in 'boot.initrd.systemd'.
 
-            Definitions:
-        ${lib.concatMapStringsSep "\n" ({ file, ... }: "    - ${file}") (lib.attrByPath name (throw "impossible") options.boot.initrd).definitionsWithLocations}
-      '';
-    }) [
+              Definitions:
+          ${lib.concatMapStringsSep "\n" ({ file, ... }: "    - ${file}") (lib.attrByPath name (throw "impossible") options.boot.initrd).definitionsWithLocations}
+        '';
+      }) [
       [ "preFailCommands" ]
       [ "preDeviceCommands" ]
       [ "preLVMCommands" ]
@@ -393,13 +403,13 @@ in {
     boot.kernelParams = [
       "root=${config.boot.initrd.systemd.root}"
     ] ++ lib.optional (config.boot.resumeDevice != "") "resume=${config.boot.resumeDevice}"
-      # `systemd` mounts root in initrd as read-only unless "rw" is on the kernel command line.
-      # For NixOS activation to succeed, we need to have root writable in initrd.
-      ++ lib.optional (config.boot.initrd.systemd.root == "gpt-auto") "rw";
+    # `systemd` mounts root in initrd as read-only unless "rw" is on the kernel command line.
+    # For NixOS activation to succeed, we need to have root writable in initrd.
+    ++ lib.optional (config.boot.initrd.systemd.root == "gpt-auto" && !config.boot.initrd.systemd.forceRoRootMount) "rw";
 
     boot.initrd.systemd = {
       # bashInteractive is easier to use and also required by debug-shell.service
-      initrdBin = [pkgs.bashInteractive pkgs.coreutils cfg.package.kmod cfg.package];
+      initrdBin = [ pkgs.bashInteractive pkgs.coreutils cfg.package.kmod cfg.package ];
       extraBin = {
         less = "${pkgs.less}/bin/less";
         mount = "${cfg.package.util-linux}/bin/mount";
@@ -488,7 +498,7 @@ in {
         "${pkgs.libfido2}/lib/libfido2.so.1"
       ] ++ jobScripts;
 
-      targets.initrd.aliases = ["default.target"];
+      targets.initrd.aliases = [ "default.target" ];
       units =
            mapAttrs' (n: v: nameValuePair "${n}.path"    (pathToUnit    v)) cfg.paths
         // mapAttrs' (n: v: nameValuePair "${n}.service" (serviceToUnit v)) cfg.services
@@ -504,7 +514,7 @@ in {
                          in nameValuePair "${n}.automount" (automountToUnit v)) cfg.automounts);
 
       # make sure all the /dev nodes are set up
-      services.systemd-tmpfiles-setup-dev.wantedBy = ["sysinit.target"];
+      services.systemd-tmpfiles-setup-dev.wantedBy = [ "sysinit.target" ];
 
       services.initrd-nixos-activation = {
         after = [ "initrd-fs.target" ];
@@ -575,7 +585,7 @@ in {
       };
 
       services.panic-on-fail = {
-        wantedBy = ["emergency.target"];
+        wantedBy = [ "emergency.target" ];
         unitConfig = {
           DefaultDependencies = false;
           ConditionKernelCommandLine = [

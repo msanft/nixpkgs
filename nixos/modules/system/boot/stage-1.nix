@@ -676,14 +676,7 @@ in
           '';
       };
 
-    boot.initrd.allowNoRootMount = mkOption {
-      default = false;
-      type = types.bool;
-      description = lib.mdDoc ''
-        Don't require an entry for `/`. Useful for dm-verity systems, where
-        systemd-veritysetup-generator takes care of creating the sysroot mount unit.
-      '';
-    };
+   
 
     fileSystems = mkOption {
       type = with lib.types; attrsOf (submodule {
@@ -706,7 +699,8 @@ in
 
   config = mkIf config.boot.initrd.enable {
     assertions = [
-      { assertion = !config.boot.initrd.systemd.enable -> any (fs: fs.mountPoint == "/") fileSystems;
+      {
+        assertion = !config.boot.initrd.systemd.enable -> any (fs: fs.mountPoint == "/") fileSystems;
         message = "The ‘fileSystems’ option does not specify your root file system.";
       }
       {
