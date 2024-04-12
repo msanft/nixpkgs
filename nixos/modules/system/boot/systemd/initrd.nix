@@ -212,7 +212,7 @@ in
     };
 
     root = lib.mkOption {
-      type = lib.types.enum [ "fstab" "gpt-auto" ];
+      type = lib.types.enum [ "fstab" "gpt-auto" "" ];
       default = "fstab";
       example = "gpt-auto";
       description = ''
@@ -400,12 +400,12 @@ in
     ++ lib.optional (cfg.enableTpm2 && !(pkgs.stdenv.hostPlatform.isRiscV64 || pkgs.stdenv.hostPlatform.isArmv7)) "tpm-crb"
     ++ lib.optional cfg.package.withEfi "efivarfs";
 
-    boot.kernelParams = [
-      "root=${config.boot.initrd.systemd.root}"
-    ] ++ lib.optional (config.boot.resumeDevice != "") "resume=${config.boot.resumeDevice}"
-    # `systemd` mounts root in initrd as read-only unless "rw" is on the kernel command line.
-    # For NixOS activation to succeed, we need to have root writable in initrd.
-    ++ lib.optional (config.boot.initrd.systemd.root == "gpt-auto" && !config.boot.initrd.systemd.forceRoRootMount) "rw";
+    boot.kernelParams = [ ]
+      ++ lib.optional (config.boot.initrd.systemd.root != "") "root=${config.boot.initrd.systemd.root}"
+      ++ lib.optional (config.boot.resumeDevice != "") "resume=${config.boot.resumeDevice}"
+      # `systemd` mounts root in initrd as read-only unless "rw" is on the kernel command line.
+      # For NixOS activation to succeed, we need to have root writable in initrd.
+      ++ lib.optional (config.boot.initrd.systemd.root == "gpt-auto" && !config.boot.initrd.systemd.forceRoRootMount) "rw";
 
     boot.initrd.systemd = {
       # bashInteractive is easier to use and also required by debug-shell.service
