@@ -355,7 +355,7 @@ in
     forceRoRootMount = mkOption {
       default = false;
       type = types.bool;
-      description = lib.mdDoc ''
+      description = ''
         Force / to be mounted as read-only.
       '';
     };
