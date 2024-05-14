@@ -14,27 +14,31 @@
 , go
 }:
 let
-  modprobeVersion = "495.44";
+  modprobeVersion = "550.54.14";
   nvidia-modprobe = fetchFromGitHub {
     owner = "NVIDIA";
     repo = "nvidia-modprobe";
     rev = modprobeVersion;
-    sha256 = "sha256-Y3ZOfge/EcmhqI19yWO7UfPqkvY1CHHvFC5l9vYyGuU=";
+    sha256 = "sha256-iBRMkvOXacs/llTtvc/ZC5i/q9gc8lMuUHxMbu8A+Kg=";
   };
   modprobePatch = substituteAll {
     src = ./modprobe.patch;
     inherit modprobeVersion;
   };
+
+  major="1";
+  minor="15";
+  patch="0";
 in
 stdenv.mkDerivation rec {
   pname = "libnvidia-container";
-  version = "1.9.0";
+  version = "${major}.${minor}.${patch}";
 
   src = fetchFromGitHub {
     owner = "NVIDIA";
-    repo = pname;
+    repo = "libnvidia-container";
     rev = "v${version}";
-    sha256 = "sha256-7OTawWwjeKU8wIa8I/+aSvAJli4kEua94nJSNyCajpE=";
+    sha256 = "sha256-enZO/qPM8yN1ch7NqGxO0lnB0bdY/+mDQui4GVYU6VQ=";
   };
 
   patches = [
@@ -98,6 +102,11 @@ stdenv.mkDerivation rec {
     # same reason we patch out the static library use of libtirpc so we set the
     # define in CFLAGS
     "CFLAGS=-DWITH_TIRPC"
+    "MAJOR=${major}"
+    "MINOR=${minor}"
+    "PATCH=${patch}"
+    "TAG=v${version}"
+    "VERSION_STRING=${version}"
   ];
 
   postInstall =
@@ -106,7 +115,7 @@ stdenv.mkDerivation rec {
       libraryPath = lib.makeLibraryPath [ "$out" driverLink "${driverLink}-32" ];
     in
     ''
-      remove-references-to -t "${go}" $out/lib/libnvidia-container-go.so.1.9.0
+      remove-references-to -t "${go}" $out/lib/libnvidia-container-go.so.*
       wrapProgram $out/bin/nvidia-container-cli --prefix LD_LIBRARY_PATH : ${libraryPath}
     '';
   disallowedReferences = [ go ];

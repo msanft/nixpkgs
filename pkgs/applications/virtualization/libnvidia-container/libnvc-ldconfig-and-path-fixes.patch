@@ -3,7 +3,7 @@ index 38bab05..e1abc89 100644
 --- a/src/ldcache.c
 +++ b/src/ldcache.c
 @@ -108,40 +108,27 @@ ldcache_close(struct ldcache *ctx)
- 
+
  int
  ldcache_resolve(struct ldcache *ctx, uint32_t arch, const char *root, const char * const libs[],
 -    char *paths[], size_t size, ldcache_select_fn select, void *select_ctx)
@@ -14,10 +14,10 @@ index 38bab05..e1abc89 100644
 -        int override;
 +        char dir[PATH_MAX];
 +        char lib[PATH_MAX];
- 
+
 -        h = (struct header_libc6 *)ctx->ptr;
          memset(paths, 0, size * sizeof(*paths));
- 
+
 -        for (uint32_t i = 0; i < h->nlibs; ++i) {
 -                int32_t flags = h->libs[i].flags;
 -                char *key = (char *)ctx->ptr + h->libs[i].key;
@@ -68,7 +68,7 @@ index 33d78dd..2b087db 100644
  int  ldcache_resolve(struct ldcache *, uint32_t, const char *, const char * const [],
 -    char *[], size_t, ldcache_select_fn, void *);
 +    char *[], size_t, const char*);
- 
+
  #endif /* HEADER_LDCACHE_H */
 diff --git a/src/nvc_info.c b/src/nvc_info.c
 index 30e3cfd..6d12a50 100644
@@ -80,7 +80,7 @@ index 30e3cfd..6d12a50 100644
          ldcache_init(&ld, err, path);
 -        if (ldcache_open(&ld) < 0)
 -                return (-1);
- 
+
          info->nlibs = size;
          info->libs = array_new(err, size);
          if (info->libs == NULL)
@@ -89,7 +89,7 @@ index 30e3cfd..6d12a50 100644
 -            info->libs, info->nlibs, select_libraries_fn, info) < 0)
 +            info->libs, info->nlibs, info->nvrm_version) < 0)
                  goto fail;
- 
+
          info->nlibs32 = size;
 @@ -183,13 +181,11 @@ find_library_paths(struct error *err, struct nvc_driver_info *info, const char *
          if (info->libs32 == NULL)
@@ -99,17 +99,17 @@ index 30e3cfd..6d12a50 100644
 +            info->libs32, info->nlibs32, info->nvrm_version) < 0)
                  goto fail;
          rv = 0;
- 
+
   fail:
 -        if (ldcache_close(&ld) < 0)
 -                return (-1);
          return (rv);
  }
- 
+
 @@ -203,7 +199,7 @@ find_binary_paths(struct error *err, struct nvc_driver_info *info, const char *r
          char path[PATH_MAX];
          int rv = -1;
- 
+
 -        if ((env = secure_getenv("PATH")) == NULL) {
 +        if ((env = "/run/nvidia-docker/bin:/run/nvidia-docker/extras/bin") == NULL) {
                  error_setx(err, "environment variable PATH not found");
@@ -122,8 +122,8 @@ index 6ff380f..cbe6a69 100644
 @@ -340,7 +340,7 @@ nvc_ldcache_update(struct nvc_context *ctx, const struct nvc_container *cnt)
          if (validate_args(ctx, cnt != NULL) < 0)
                  return (-1);
- 
--        argv = (char * []){cnt->cfg.ldconfig, cnt->cfg.libs_dir, cnt->cfg.libs32_dir, NULL};
+
+-        argv = (char * []){cnt->cfg.ldconfig, "-f", "/etc/ld.so.conf", "-C", "/etc/ld.so.cache", cnt->cfg.libs_dir, cnt->cfg.libs32_dir, NULL};
 +        argv = (char * []){cnt->cfg.ldconfig, "-f", "/tmp/ld.so.conf.nvidia-host", "-C", "/tmp/ld.so.cache.nvidia-host", cnt->cfg.libs_dir, cnt->cfg.libs32_dir, NULL};
          if (*argv[0] == '@') {
                  /*
