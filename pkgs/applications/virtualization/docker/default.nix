@@ -4,7 +4,7 @@ rec {
   dockerGen = {
       version
       , cliRev, cliHash
-      , mobyRev, mobyHash
+      , mobyOwner ? "moby", mobyRev, mobyHash
       , runcRev, runcHash
       , containerdRev, containerdHash
       , tiniRev, tiniHash
@@ -73,7 +73,7 @@ rec {
     });
 
     moby-src = fetchFromGitHub {
-      owner = "moby";
+      owner = mobyOwner;
       repo = "moby";
       rev = mobyRev;
       hash = mobyHash;
@@ -282,7 +282,8 @@ rec {
   docker_24 = callPackage dockerGen rec {
     version = "24.0.9";
     cliRev = "v${version}";
-    cliHash = "sha256-nXIZtE0X1OoQT908IGuRhVHb0tiLbqQLP0Md3YWt0/Q=";
+    cliHash = "sha256-u1quVGTx/p8BDyRn33vYyyuE5BOhWMnGQ5uVX0PZ5mg=";
+    mobyOwner = "moby";
     mobyRev = "v${version}";
     mobyHash = "sha256-KRS99heyMAPBnjjr7If8TOlJf6v6866S7J3YGkOhFiA=";
     runcRev = "v1.1.12";
@@ -297,8 +298,24 @@ rec {
     version = "25.0.5";
     cliRev = "v${version}";
     cliHash = "sha256-CACMi3bXUN6oGc2f/Z+lNQqMgQ4llRWPRKgijdpiPGg=";
+    mobyOwner = "moby";
     mobyRev = "v${version}";
     mobyHash = "sha256-4QGz22fXxyAD77pyUWb2lF3VKqxmPIrGqcJGoyrEHew=";
+    runcRev = "v1.1.12";
+    runcHash = "sha256-N77CU5XiGYIdwQNPFyluXjseTeaYuNJ//OsEUS0g/v0=";
+    containerdRev = "v1.7.13";
+    containerdHash = "sha256-y3CYDZbA2QjIn1vyq/p1F1pAVxQHi/0a6hGWZCRWzyk=";
+    tiniRev = "v0.19.0";
+    tiniHash = "sha256-ZDKu/8yE5G0RYFJdhgmCdN3obJNyRWv6K/Gd17zc1sI=";
+  };
+
+  docker_25_fork = callPackage dockerGen rec {
+    version = "25.0.5";
+    cliRev = "v${version}";
+    cliHash = "sha256-CACMi3bXUN6oGc2f/Z+lNQqMgQ4llRWPRKgijdpiPGg=";
+    mobyOwner = "edgelesssys";
+    mobyRev = "9823b09cfbcef9043ede7c7df5c06238dc45626f";
+    mobyHash = "sha256-qfsdQ+iNGRJoHwXTeoIigajM/YOAnKYjku7Lc+doPWY=";
     runcRev = "v1.1.12";
     runcHash = "sha256-N77CU5XiGYIdwQNPFyluXjseTeaYuNJ//OsEUS0g/v0=";
     containerdRev = "v1.7.13";
@@ -310,7 +327,8 @@ rec {
   docker_26 = callPackage dockerGen rec {
     version = "26.1.3";
     cliRev = "v${version}";
-    cliHash = "sha256-xE+g9Gtza4oAIlGUzDmjrqJa42bEkpbKbL2fsFlYzpY=";
+    cliHash = "sha256-jGg/AVnIzI8e+DdF0uKlSZApRxcwuOjCQpfnBaCY4fI=";
+    mobyOwner = "moby";
     mobyRev = "v${version}";
     mobyHash = "sha256-s4hOvYV2+wDNKs4iFw6OflK+nemvqNhmfFURzhWaUzY=";
     runcRev = "v1.1.12";
