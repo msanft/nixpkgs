@@ -1,25 +1,38 @@
-{ lib, callPackage, fetchFromGitHub, fetchurl, fetchpatch, stdenv, pkgsi686Linux }:
+{
+  lib,
+  callPackage,
+  fetchFromGitHub,
+  fetchurl,
+  fetchpatch,
+  stdenv,
+  pkgsi686Linux,
+}:
 
 let
-  generic = args:
+  generic =
+    args:
     let
       imported = import ./generic.nix args;
     in
     callPackage imported {
-      lib32 = (pkgsi686Linux.callPackage imported {
-        libsOnly = true;
-        kernel = null;
-      }).out;
+      lib32 =
+        (pkgsi686Linux.callPackage imported {
+          libsOnly = true;
+          kernel = null;
+        }).out;
     };
 
-  kernel = callPackage # a hacky way of extracting parameters from callPackage
-    ({ kernel, libsOnly ? false }: if libsOnly then { } else kernel)
-    { };
+  kernel =
+    # a hacky way of extracting parameters from callPackage
+    callPackage (
+      {
+        kernel,
+        libsOnly ? false,
+      }:
+      if libsOnly then { } else kernel
+    ) { };
 
-  selectHighestVersion = a: b:
-    if lib.versionOlder a.version b.version
-    then b
-    else a;
+  selectHighestVersion = a: b: if lib.versionOlder a.version b.version then b else a;
 
   # https://forums.developer.nvidia.com/t/linux-6-7-3-545-29-06-550-40-07-error-modpost-gpl-incompatible-module-nvidia-ko-uses-gpl-only-symbol-rcu-read-lock/280908/19
   rcu_patch = fetchpatch {
@@ -54,6 +67,15 @@ rec {
     persistencedSha256 = "sha256-uqT++w0gZRNbzyqbvP3GBqgb4g18r6VM3O8AMEfM7GU=";
 
     patches = [ rcu_patch ];
+  };
+
+  confcom_550 = generic {
+    version = "550.90.07";
+    sha256_64bit = "sha256-Uaz1edWpiE9XOh0/Ui5/r6XnhB4iqc7AtLvq4xsLlzM=";
+    sha256_aarch64 = "sha256-VLmh7eH0xhEu/AK+Osb9vtqAFni+lx84P/bo4ZgCqj8=";
+    openSha256 = "sha256-VLmh7eH0xhEu/AK+Osb9vtqAFni+lx84P/bo4ZgCqj8=";
+    settingsSha256 = "sha256-VLmh7eH0xhEu/AK+Osb9vtqAFni+lx84P/bo4ZgCqj8=";
+    persistencedSha256 = "sha256-VLmh7eH0xhEu/AK+Osb9vtqAFni+lx84P/bo4ZgCqj8=";
   };
 
   confcom_6_8 = generic {
