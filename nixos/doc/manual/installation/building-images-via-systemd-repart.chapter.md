@@ -1,17 +1,17 @@
 # Building Images via `systemd-repart` {#sec-image-repart}
 
 You can build disk images in NixOS with the `image.repart` option provided by
-the module [image/repart.nix][]. This module uses `systemd-repart` to build the
+the module [image/repart/repart.nix][]. This module uses `systemd-repart` to build the
 images and exposes it's entire interface via the `repartConfig` option.
 
-[image/repart.nix]: https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/image/repart.nix
+[image/repart/repart.nix]: https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/image/repart/repart.nix
 
 An example of how to build an image:
 
 ```nix
 { config, modulesPath, ... }: {
 
-  imports = [ "${modulesPath}/image/repart.nix" ];
+  imports = [ "${modulesPath}/image/repart/repart.nix" ];
 
   image.repart = {
     name = "image";
@@ -66,7 +66,7 @@ that the prefix is stripped from the paths before copying them into the image.
 
 ## Appliance Image {#sec-image-repart-appliance}
 
-The `image/repart.nix` module can also be used to build self-contained [software
+The `image/repart/repart.nix` module can also be used to build self-contained [software
 appliances][].
 
 [software appliances]: https://en.wikipedia.org/wiki/Software_appliance
@@ -90,7 +90,7 @@ in
 (pkgs.nixos [
   ({ config, lib, pkgs, modulesPath, ... }: {
 
-    imports = [ "${modulesPath}/image/repart.nix" ];
+    imports = [ "${modulesPath}/image/repart/repart.nix" ];
 
     boot.loader.grub.enable = false;
 

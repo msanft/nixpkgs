@@ -30,7 +30,7 @@ in
     }:
     {
 
-      imports = [ "${modulesPath}/image/repart.nix" ];
+      imports = [ "${modulesPath}/image/repart/repart.nix" ];
 
       virtualisation.directBoot.enable = false;
       virtualisation.mountHostNixStore = false;

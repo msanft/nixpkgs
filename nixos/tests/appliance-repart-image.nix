@@ -18,7 +18,7 @@ in
 
   nodes.machine = { config, lib, pkgs, ... }: {
 
-    imports = [ ../modules/image/repart.nix ];
+    imports = [ ../modules/image/repart/repart.nix ];
 
     virtualisation.directBoot.enable = false;
     virtualisation.mountHostNixStore = false;

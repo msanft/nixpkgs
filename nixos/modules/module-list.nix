@@ -1721,7 +1721,7 @@
   {
     documentation.nixos.extraModules = [
       ./virtualisation/qemu-vm.nix
-      ./image/repart.nix
+      ./image/repart/repart.nix
     ];
   }
 ]
