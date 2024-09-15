@@ -1644,6 +1644,7 @@
   ./system/boot/tmp.nix
   ./system/boot/uvesafb.nix
   ./system/etc/etc-activation.nix
+  ./system/static-ostree/static-ostree.nix
   ./tasks/auto-upgrade.nix
   ./tasks/bcache.nix
   ./tasks/cpu-freq.nix
